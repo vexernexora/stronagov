@@ -7,64 +7,45 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="icon" type="image/png" href="/static/logo.png">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    :root {
-      --bg-dark: #0d0d0d;
-      --bg-darker: #000000;
-      --text-white: #ffffff;
-      --text-gray: #9ca3af;
-      --text-muted: #6b7280;
-      --accent-red: #dc2626;
-      --accent-red-hover: #b91c1c;
-      --border-gray: #1f2937;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--bg-darker);
-      color: var(--text-white);
+      font-family: 'Inter', sans-serif;
+      background: #000;
+      color: #fff;
       line-height: 1.5;
-      overflow-x: hidden;
     }
 
-    /* Grid background like CIA */
+    /* Grid background */
     .grid-bg {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       background-image:
-        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-      background-size: 120px 120px;
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 100px 100px;
       pointer-events: none;
-      z-index: 0;
     }
 
-    /* Navigation */
-    .nav {
+    /* Nav */
+    nav {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      background: var(--bg-darker);
-      border-bottom: 1px solid var(--border-gray);
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: #000;
+      border-bottom: 1px solid #222;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      padding: 0 50px;
     }
 
-    .nav-container {
+    .nav-inner {
       max-width: 1400px;
       margin: 0 auto;
-      padding: 0 48px;
-      height: 72px;
+      width: 100%;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -73,41 +54,38 @@
     .nav-left {
       display: flex;
       align-items: center;
-      gap: 48px;
+      gap: 50px;
     }
 
-    .nav-brand {
+    .logo {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
     }
 
-    .nav-brand img {
-      width: 44px;
-      height: 44px;
+    .logo img {
+      width: 42px;
+      height: 42px;
     }
 
-    .nav-brand-text {
-      font-size: 14px;
+    .logo-text {
       font-weight: 700;
-      line-height: 1.3;
-    }
-
-    .nav-brand-text span {
-      display: block;
+      font-size: 14px;
+      line-height: 1.2;
     }
 
     .nav-links {
       display: flex;
-      gap: 32px;
+      gap: 30px;
     }
 
     .nav-links a {
-      color: var(--text-white);
+      color: #fff;
       text-decoration: none;
       font-size: 14px;
       font-weight: 500;
-      transition: opacity 0.2s;
     }
 
     .nav-links a:hover {
@@ -117,244 +95,213 @@
     .nav-right {
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: 20px;
     }
 
     .nav-right a {
-      color: var(--text-white);
+      color: #fff;
       text-decoration: none;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
-    .nav-right a:hover {
-      opacity: 0.7;
-    }
-
-    .nav-search {
+    .search-box {
+      background: #111;
+      border: 1px solid #333;
+      padding: 10px 16px;
+      color: #666;
+      font-size: 14px;
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 16px;
-      background: var(--bg-dark);
-      border: 1px solid var(--border-gray);
-      color: var(--text-muted);
-      font-size: 14px;
-      min-width: 160px;
+      min-width: 150px;
     }
 
-    /* Hero Section */
+    /* Hero */
     .hero {
       min-height: 100vh;
       display: flex;
       align-items: center;
-      padding: 120px 48px 80px;
+      padding: 100px 50px;
       position: relative;
-      z-index: 1;
     }
 
-    .hero-container {
+    .hero-inner {
       max-width: 1400px;
       margin: 0 auto;
       width: 100%;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 80px;
+      gap: 60px;
       align-items: center;
     }
 
-    .hero-content h1 {
-      font-size: 64px;
+    .hero h1 {
+      font-size: 58px;
       font-weight: 900;
       line-height: 1.05;
-      margin-bottom: 32px;
-      letter-spacing: -2px;
+      margin-bottom: 30px;
     }
 
     .hero-tagline {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text-white);
-      margin-bottom: 12px;
+      border-left: 3px solid #dc2626;
       padding-left: 16px;
-      border-left: 3px solid var(--accent-red);
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 16px;
     }
 
-    .hero-description {
+    .hero-desc {
+      color: #999;
       font-size: 15px;
-      color: var(--text-gray);
-      margin-bottom: 32px;
       line-height: 1.7;
-      max-width: 480px;
+      margin-bottom: 30px;
     }
 
     .btn-red {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+      display: inline-block;
+      background: #dc2626;
+      color: #fff;
       padding: 16px 32px;
-      background: var(--accent-red);
-      color: var(--text-white);
-      text-decoration: none;
       font-size: 13px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1px;
+      text-decoration: none;
       transition: background 0.2s;
     }
 
     .btn-red:hover {
-      background: var(--accent-red-hover);
+      background: #b91c1c;
     }
 
-    .hero-image {
-      position: relative;
-    }
-
-    .hero-image-box {
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    .hero-img {
+      background: linear-gradient(135deg, #111 0%, #1a1a2e 100%);
       aspect-ratio: 16/10;
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
     }
 
-    .hero-image-box img {
-      width: 60%;
-      height: auto;
-      opacity: 0.8;
+    .hero-img img {
+      width: 50%;
+      opacity: 0.7;
     }
 
     /* Sections */
-    .section {
-      padding: 100px 48px;
+    section {
+      padding: 100px 50px;
       position: relative;
-      z-index: 1;
     }
 
     .section-dark {
-      background: var(--bg-dark);
+      background: #0a0a0a;
     }
 
-    .section-container {
+    .section-inner {
       max-width: 1400px;
       margin: 0 auto;
     }
 
-    /* About Section */
-    .about-grid {
+    .section-grid {
       display: grid;
-      grid-template-columns: 1fr 1.2fr;
+      grid-template-columns: 1fr 1.3fr;
       gap: 80px;
       align-items: start;
     }
 
-    .about-label {
+    .section-label {
       display: flex;
       align-items: center;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .about-label svg {
-      width: 32px;
-      height: 32px;
-      stroke: var(--text-white);
-    }
-
-    .about-label-text {
-      font-size: 24px;
+      gap: 14px;
+      font-size: 22px;
       font-weight: 600;
     }
 
-    .about-right h2 {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 16px;
-      color: var(--text-white);
+    .section-label svg {
+      width: 28px;
+      height: 28px;
+      stroke: #fff;
     }
 
-    .about-right p {
+    .section-content h2 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .section-content p {
+      color: #888;
       font-size: 15px;
-      color: var(--text-gray);
       line-height: 1.8;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     .btn-outline {
-      display: inline-flex;
-      align-items: center;
+      display: inline-block;
+      border: 1px solid #fff;
+      color: #fff;
       padding: 12px 24px;
-      background: transparent;
-      border: 1px solid var(--text-white);
-      color: var(--text-white);
-      text-decoration: none;
       font-size: 12px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1px;
+      text-decoration: none;
       transition: all 0.2s;
     }
 
     .btn-outline:hover {
-      background: var(--text-white);
-      color: var(--bg-darker);
+      background: #fff;
+      color: #000;
     }
 
-    /* Legacy Section */
+    /* Legacy with badge */
     .legacy-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 80px;
+      gap: 60px;
       align-items: center;
     }
 
     .legacy-badge {
       display: flex;
-      align-items: center;
       justify-content: center;
-      padding: 60px;
     }
 
     .legacy-badge img {
-      width: 280px;
-      height: 280px;
+      width: 260px;
+      height: 260px;
     }
 
     .legacy-content h2 {
-      font-size: 32px;
+      font-size: 30px;
       font-weight: 800;
       margin-bottom: 20px;
     }
 
-    .legacy-tagline {
-      font-size: 14px;
+    .legacy-content .tagline {
       font-weight: 700;
-      color: var(--text-white);
+      font-size: 14px;
       margin-bottom: 16px;
-      line-height: 1.6;
     }
 
     .legacy-content p {
+      color: #888;
       font-size: 15px;
-      color: var(--text-gray);
       line-height: 1.8;
       margin-bottom: 24px;
     }
 
     /* Footer */
-    .footer {
-      padding: 48px;
-      background: var(--bg-dark);
-      border-top: 1px solid var(--border-gray);
-      position: relative;
-      z-index: 1;
+    footer {
+      background: #0a0a0a;
+      border-top: 1px solid #222;
+      padding: 40px 50px;
     }
 
-    .footer-container {
+    .footer-inner {
       max-width: 1400px;
       margin: 0 auto;
       display: flex;
@@ -366,110 +313,67 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      color: #666;
+      font-size: 13px;
     }
 
     .footer-brand img {
-      width: 36px;
-      height: 36px;
-      opacity: 0.7;
-    }
-
-    .footer-brand span {
-      font-size: 13px;
-      color: var(--text-muted);
+      width: 32px;
+      opacity: 0.6;
     }
 
     .footer-links {
       display: flex;
-      gap: 32px;
+      gap: 30px;
     }
 
     .footer-links a {
+      color: #666;
       font-size: 13px;
-      color: var(--text-muted);
       text-decoration: none;
-      transition: color 0.2s;
     }
 
     .footer-links a:hover {
-      color: var(--text-white);
+      color: #fff;
     }
 
     .footer-copy {
+      color: #444;
       font-size: 12px;
-      color: var(--text-muted);
     }
 
-    /* Responsive */
-    @media (max-width: 1024px) {
-      .hero-container,
-      .about-grid,
-      .legacy-grid {
+    @media (max-width: 900px) {
+      .hero-inner, .section-grid, .legacy-grid {
         grid-template-columns: 1fr;
-        gap: 48px;
       }
-
-      .hero-content h1 {
-        font-size: 48px;
-      }
-
-      .nav-links {
-        display: none;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .nav-container,
-      .hero,
-      .section {
-        padding-left: 24px;
-        padding-right: 24px;
-      }
-
-      .hero-content h1 {
-        font-size: 36px;
-      }
-
-      .footer-container {
-        flex-direction: column;
-        gap: 24px;
-        text-align: center;
-      }
-
-      .legacy-badge img {
-        width: 180px;
-        height: 180px;
-      }
+      .hero h1 { font-size: 36px; }
+      .nav-links { display: none; }
+      nav, .hero, section, footer { padding-left: 24px; padding-right: 24px; }
     }
   </style>
 </head>
 <body>
   <div class="grid-bg"></div>
 
-  <!-- Navigation -->
-  <nav class="nav">
-    <div class="nav-container">
+  <nav>
+    <div class="nav-inner">
       <div class="nav-left">
-        <a href="/" class="nav-brand">
-          <img src="/logo.png" alt="USSS">
-          <div class="nav-brand-text">
-            <span>Secret</span>
-            <span>Service</span>
-          </div>
+        <a href="/" class="logo">
+          <img src="/static/logo.png" alt="USSS">
+          <div class="logo-text">Secret<br>Service</div>
         </a>
         <div class="nav-links">
           <a href="#about">O USSS</a>
-          <a href="#legacy">Misja</a>
+          <a href="#mission">Misja</a>
           <a href="#careers">Kariera</a>
           <a href="#contact">Kontakt</a>
         </div>
       </div>
       <div class="nav-right">
-        <a href="/panel">Panel Agenta</a>
-        <div class="nav-search">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="M21 21l-4.35-4.35"/>
+        <a href="/panel">PANEL AGENTA</a>
+        <div class="search-box">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
           Search
         </div>
@@ -477,134 +381,103 @@
     </div>
   </nav>
 
-  <!-- Hero -->
   <section class="hero">
-    <div class="hero-container">
-      <div class="hero-content">
+    <div class="hero-inner">
+      <div>
         <h1>We are the Nation's first line of defense</h1>
-        <p class="hero-tagline">Chronimy tych, którzy chronią naród. Działamy tam, gdzie inni nie mogą.</p>
-        <p class="hero-description">
-          Kariera w Secret Service to służba na najwyższym poziomie. Szukamy ludzi z różnych środowisk, gotowych poświęcić się dla bezpieczeństwa państwa.
-        </p>
-        <a href="#careers" class="btn-red">Dołącz do nas</a>
+        <p class="hero-tagline">Chronimy tych, którzy chronią naród</p>
+        <p class="hero-desc">Kariera w Secret Service to służba na najwyższym poziomie. Szukamy ludzi gotowych poświęcić się dla bezpieczeństwa państwa.</p>
+        <a href="#careers" class="btn-red">DOŁĄCZ DO NAS</a>
       </div>
-      <div class="hero-image">
-        <div class="hero-image-box">
-          <img src="/logo.png" alt="USSS Headquarters">
-        </div>
+      <div class="hero-img">
+        <img src="/static/logo.png" alt="USSS">
       </div>
     </div>
   </section>
 
-  <!-- About Section -->
-  <section class="section" id="about">
-    <div class="section-container">
-      <div class="about-grid">
-        <div class="about-left">
-          <div class="about-label">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-            <span class="about-label-text">Nasza Agencja</span>
-          </div>
+  <section id="about">
+    <div class="section-inner">
+      <div class="section-grid">
+        <div class="section-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          Nasza Agencja
         </div>
-        <div class="about-right">
+        <div class="section-content">
           <h2>Zapewniamy bezpieczeństwo najważniejszym osobom w państwie</h2>
-          <p>
-            Jako elitarna jednostka Secret Service, jesteśmy odpowiedzialni za ochronę Prezydenta, wysokich rangą urzędników państwowych oraz prowadzenie dochodzeń w sprawach przestępstw finansowych. Nasza praca wymaga najwyższego poziomu profesjonalizmu i poświęcenia.
-          </p>
-          <a href="#" class="btn-outline">Dowiedz się więcej</a>
+          <p>Jako elitarna jednostka Secret Service, jesteśmy odpowiedzialni za ochronę Prezydenta i wysokich rangą urzędników. Nasza praca wymaga najwyższego poziomu profesjonalizmu.</p>
+          <a href="#" class="btn-outline">DOWIEDZ SIĘ WIĘCEJ</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Legacy Section -->
-  <section class="section section-dark" id="legacy">
-    <div class="section-container">
+  <section class="section-dark" id="mission">
+    <div class="section-inner">
       <div class="legacy-grid">
         <div class="legacy-badge">
-          <img src="/logo.png" alt="USSS Badge">
+          <img src="/static/logo.png" alt="USSS Badge">
         </div>
         <div class="legacy-content">
           <h2>Nasza Misja</h2>
-          <p class="legacy-tagline">
-            Dziedzictwo Secret Service to historia odwagi, poświęcenia i niezłomnej służby dla narodu.
-          </p>
-          <p>
-            Chronimy kraj w przeszłości, teraźniejszości i przyszłości. Od naszych początków do dziś, kontynuujemy tradycję pomysłowości, odwagi i cichego poświęcenia, które uczyniły nas elitarną agencją ochrony.
-          </p>
-          <a href="#" class="btn-outline">Poznaj naszą historię</a>
+          <p class="tagline">Dziedzictwo Secret Service to historia odwagi i niezłomnej służby dla narodu.</p>
+          <p>Chronimy kraj w przeszłości, teraźniejszości i przyszłości. Kontynuujemy tradycję odwagi i cichego poświęcenia.</p>
+          <a href="#" class="btn-outline">POZNAJ HISTORIĘ</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Careers Section -->
-  <section class="section" id="careers">
-    <div class="section-container">
-      <div class="about-grid">
-        <div class="about-left">
-          <div class="about-label">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            <span class="about-label-text">Kariera</span>
-          </div>
+  <section id="careers">
+    <div class="section-inner">
+      <div class="section-grid">
+        <div class="section-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          Kariera
         </div>
-        <div class="about-right">
+        <div class="section-content">
           <h2>Zostań częścią elity</h2>
-          <p>
-            Rekrutujemy najlepszych z najlepszych. Jeśli masz w sobie pasję do służby, dyscyplinę i gotowość do poświęceń - czekamy na Ciebie. Oferujemy elitarne szkolenie, rozwój kariery i możliwość służenia na najwyższym poziomie.
-          </p>
-          <a href="#" class="btn-red">Aplikuj teraz</a>
+          <p>Rekrutujemy najlepszych z najlepszych. Jeśli masz pasję do służby i gotowość do poświęceń - czekamy na Ciebie.</p>
+          <a href="#" class="btn-red">APLIKUJ TERAZ</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Contact Section -->
-  <section class="section section-dark" id="contact">
-    <div class="section-container">
-      <div class="about-grid">
-        <div class="about-left">
-          <div class="about-label">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-            </svg>
-            <span class="about-label-text">Kontakt</span>
-          </div>
+  <section class="section-dark" id="contact">
+    <div class="section-inner">
+      <div class="section-grid">
+        <div class="section-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.574 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+          Kontakt
         </div>
-        <div class="about-right">
+        <div class="section-content">
           <h2>Skontaktuj się z nami</h2>
-          <p>
-            W sprawach oficjalnych, rekrutacji lub zgłoszeń incydentów - skontaktuj się z naszym biurem. Działamy 24/7 dla bezpieczeństwa narodu.
-          </p>
-          <p style="margin-bottom: 8px;"><strong>Serwer:</strong> Majestic RP</p>
-          <p style="margin-bottom: 8px;"><strong>Frakcja:</strong> United States Secret Service</p>
-          <p><strong>Status:</strong> Aktywna rekrutacja</p>
+          <p><strong>Serwer:</strong> Majestic RP<br><strong>Frakcja:</strong> United States Secret Service<br><strong>Status:</strong> Aktywna rekrutacja</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="footer-container">
+  <footer>
+    <div class="footer-inner">
       <div class="footer-brand">
-        <img src="/logo.png" alt="USSS">
-        <span>United States Secret Service</span>
+        <img src="/static/logo.png" alt="">
+        United States Secret Service
       </div>
       <div class="footer-links">
-        <a href="/panel">Panel Agenta</a>
+        <a href="/panel">Panel</a>
         <a href="#about">O nas</a>
-        <a href="#careers">Kariera</a>
         <a href="#contact">Kontakt</a>
       </div>
-      <span class="footer-copy">&copy; 2024 USSS | Majestic RP</span>
+      <span class="footer-copy">© 2024 USSS | Majestic RP</span>
     </div>
   </footer>
 </body>
