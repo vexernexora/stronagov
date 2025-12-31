@@ -1029,7 +1029,9 @@ function getAuditIcon(action) {
     LOGOUT: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
     REPORT_STATUS_CHANGE: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
     USER_CREATE: '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>',
-    USER_DELETE: '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="11" x2="23" y2="11"/>'
+    USER_DELETE: '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="11" x2="23" y2="11"/>',
+    RESTORE_BACKUP: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
+    DELETE_BACKUP: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>'
   };
   return icons[action] || '<circle cx="12" cy="12" r="10"/>';
 }
@@ -1046,7 +1048,9 @@ function formatAuditAction(action) {
     USER_DELETE: 'User Deleted',
     CLEAR_REPORTS: 'Reports Cleared',
     RESET_STATS: 'Statistics Reset',
-    SETTINGS_UPDATE: 'Settings Updated'
+    SETTINGS_UPDATE: 'Settings Updated',
+    RESTORE_BACKUP: 'Backup Restored',
+    DELETE_BACKUP: 'Backup Deleted'
   };
   return actions[action] || action;
 }
@@ -1066,13 +1070,17 @@ function formatAuditDetails(log) {
       return `Created: ${details.username} (${details.role})`;
     case 'USER_DELETE':
       return `Deleted: ${details.username}`;
+    case 'RESTORE_BACKUP':
+      return `Restored ${details.restoredCount || 0} reports from ${details.filename || 'backup'}`;
+    case 'DELETE_BACKUP':
+      return `Deleted: ${details.filename || 'backup'}`;
     default:
       return JSON.stringify(details).slice(0, 50);
   }
 }
 
 // ==================== Settings ====================
-function renderSettings(wrapper) {
+async function renderSettings(wrapper) {
   if (currentUser.role !== 'director') {
     wrapper.innerHTML = `
       <div class="empty-state">
@@ -1088,6 +1096,11 @@ function renderSettings(wrapper) {
   }
 
   wrapper.innerHTML = `
+    <div class="settings-section">
+      <h3 class="settings-title">Backups</h3>
+      <div id="backupsList" style="margin-top: 16px;">Loading backups...</div>
+    </div>
+
     <div class="settings-section">
       <h3 class="settings-title">Danger Zone</h3>
       <div class="settings-row">
@@ -1122,6 +1135,102 @@ function renderSettings(wrapper) {
       </div>
     </div>
   `;
+
+  // Load backups
+  await loadBackups();
+}
+
+async function loadBackups() {
+  try {
+    const response = await fetch('/api/admin/backups');
+    const data = await response.json();
+
+    const container = document.getElementById('backupsList');
+    if (!data.backups || data.backups.length === 0) {
+      container.innerHTML = '<p style="color: var(--text-muted);">No backups available</p>';
+      return;
+    }
+
+    container.innerHTML = `
+      <table class="data-table" style="margin-top: 8px;">
+        <thead>
+          <tr>
+            <th>Backup File</th>
+            <th>Date</th>
+            <th>Reports</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.backups.map(backup => `
+            <tr>
+              <td style="font-family: 'JetBrains Mono', monospace; font-size: 12px;">${escapeHtml(backup.filename)}</td>
+              <td>${formatDate(backup.date, true)}</td>
+              <td>${backup.reportCount}</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="btn btn-success btn-sm" onclick="restoreBackup('${escapeHtml(backup.filename)}')" title="Restore">
+                    Restore
+                  </button>
+                  <button class="btn btn-danger btn-sm" onclick="deleteBackup('${escapeHtml(backup.filename)}')" title="Delete">
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (error) {
+    console.error('Error loading backups:', error);
+    document.getElementById('backupsList').innerHTML = '<p style="color: var(--error);">Failed to load backups</p>';
+  }
+}
+
+async function restoreBackup(filename) {
+  if (!confirm(`Are you sure you want to restore from "${filename}"?\n\nA backup of current data will be created before restore.`)) return;
+
+  try {
+    const response = await fetch('/api/admin/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      showToast(`Restored ${data.restoredCount} reports from backup`, 'success');
+      loadBackups();
+      updatePendingBadge();
+    } else {
+      showToast(data.error || 'Failed to restore backup', 'error');
+    }
+  } catch (error) {
+    showToast('Failed to restore backup', 'error');
+  }
+}
+
+async function deleteBackup(filename) {
+  if (!confirm(`Are you sure you want to delete backup "${filename}"?`)) return;
+
+  try {
+    const response = await fetch(`/api/admin/backups/${encodeURIComponent(filename)}`, {
+      method: 'DELETE'
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      showToast('Backup deleted', 'success');
+      loadBackups();
+    } else {
+      showToast(data.error || 'Failed to delete backup', 'error');
+    }
+  } catch (error) {
+    showToast('Failed to delete backup', 'error');
+  }
 }
 
 async function clearAllReports() {
