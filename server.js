@@ -724,24 +724,22 @@ app.patch('/api/settings', requireAuth, requireRole('director'), (req, res) => {
 });
 
 // ==================== SERVE FRONTEND ====================
-// Landing page (public)
+// Public page (for everyone)
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'landing.html'));
-});
-
-// Admin panel
-app.get('/panel', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// SPA fallback for panel routes
+// Admin panel (private, for management)
+app.get('/panel', (req, res) => {
+  res.sendFile(path.join(__dirname, 'panel.html'));
+});
+
+// Fallback
 app.get('*', (req, res) => {
-  // If it's an API route that wasn't matched, return 404
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'Not found' });
   }
-  // Otherwise serve landing page
-  res.sendFile(path.join(__dirname, 'landing.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // ==================== START SERVER ====================
