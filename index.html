@@ -3,238 +3,823 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>USSS Management Portal</title>
+  <title>USSS | United States Secret Service</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #000000;
+      --bg-secondary: #0a0a0a;
+      --bg-tertiary: #111111;
+      --gold: #c9a227;
+      --gold-light: #d4af37;
+      --text-primary: #ffffff;
+      --text-secondary: #888888;
+      --text-muted: #555555;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Animated grid background */
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image:
+        linear-gradient(rgba(201, 162, 39, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201, 162, 39, 0.03) 1px, transparent 1px);
+      background-size: 80px 80px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Navigation */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 20px 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .nav-brand img {
+      width: 45px;
+      height: 45px;
+    }
+
+    .nav-brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav-brand-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-primary);
+    }
+
+    .nav-brand-subtitle {
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 48px;
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: color 0.3s;
+    }
+
+    .nav-links a:hover {
+      color: var(--gold);
+    }
+
+    .nav-btn {
+      padding: 12px 28px;
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+
+    .nav-btn:hover {
+      background: var(--gold);
+      color: var(--bg-primary);
+    }
+
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 0 60px;
+    }
+
+    .hero-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(ellipse at center, rgba(201, 162, 39, 0.05) 0%, transparent 70%);
+    }
+
+    .hero-content {
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      max-width: 900px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 24px;
+      background: rgba(201, 162, 39, 0.1);
+      border: 1px solid rgba(201, 162, 39, 0.2);
+      margin-bottom: 40px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .hero-title {
+      font-size: 80px;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 32px;
+      letter-spacing: -3px;
+    }
+
+    .hero-title span {
+      display: block;
+    }
+
+    .hero-title .gold {
+      color: var(--gold);
+      -webkit-text-stroke: 0;
+    }
+
+    .hero-subtitle {
+      font-size: 18px;
+      color: var(--text-secondary);
+      margin-bottom: 48px;
+      font-weight: 400;
+      letter-spacing: 1px;
+    }
+
+    .hero-cta {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 40px;
+      background: var(--gold);
+      color: var(--bg-primary);
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: all 0.3s;
+    }
+
+    .btn-primary:hover {
+      background: var(--gold-light);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px rgba(201, 162, 39, 0.3);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 40px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: var(--text-primary);
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: all 0.3s;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--text-primary);
+    }
+
+    /* Scroll indicator */
+    .scroll-indicator {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-muted);
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .scroll-indicator .line {
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(180deg, var(--gold) 0%, transparent 100%);
+      animation: scrollLine 2s ease-in-out infinite;
+    }
+
+    @keyframes scrollLine {
+      0%, 100% { transform: scaleY(0); transform-origin: top; }
+      50% { transform: scaleY(1); transform-origin: top; }
+      51% { transform-origin: bottom; }
+      100% { transform: scaleY(0); transform-origin: bottom; }
+    }
+
+    /* Stats section */
+    .stats {
+      padding: 100px 60px;
+      background: var(--bg-secondary);
+      border-top: 1px solid rgba(201, 162, 39, 0.1);
+      border-bottom: 1px solid rgba(201, 162, 39, 0.1);
+      position: relative;
+      z-index: 2;
+    }
+
+    .stats-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 60px;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 64px;
+      font-weight: 900;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      font-weight: 600;
+    }
+
+    /* About section */
+    .about {
+      padding: 140px 60px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .about-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 100px;
+      align-items: center;
+    }
+
+    .about-content {
+      padding-right: 40px;
+    }
+
+    .section-label {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(201, 162, 39, 0.3);
+    }
+
+    .about h2 {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 32px;
+      letter-spacing: -1px;
+    }
+
+    .about p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.9;
+      margin-bottom: 24px;
+    }
+
+    .about-image {
+      position: relative;
+    }
+
+    .about-image-wrapper {
+      background: var(--bg-tertiary);
+      border: 1px solid rgba(201, 162, 39, 0.1);
+      padding: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .about-image-wrapper img {
+      width: 200px;
+      height: 200px;
+      opacity: 0.9;
+    }
+
+    /* Mission section */
+    .mission {
+      padding: 140px 60px;
+      background: var(--bg-secondary);
+      position: relative;
+      z-index: 2;
+    }
+
+    .mission-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .mission-header {
+      text-align: center;
+      margin-bottom: 80px;
+    }
+
+    .mission-header h2 {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 20px;
+    }
+
+    .mission-header p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .mission-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+
+    .mission-card {
+      background: var(--bg-tertiary);
+      border: 1px solid rgba(255,255,255,0.03);
+      padding: 48px 40px;
+      transition: all 0.4s;
+    }
+
+    .mission-card:hover {
+      border-color: rgba(201, 162, 39, 0.3);
+      transform: translateY(-8px);
+    }
+
+    .mission-card-icon {
+      width: 56px;
+      height: 56px;
+      background: rgba(201, 162, 39, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+    }
+
+    .mission-card-icon svg {
+      width: 28px;
+      height: 28px;
+      stroke: var(--gold);
+    }
+
+    .mission-card h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .mission-card p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    /* Contact section */
+    .contact {
+      padding: 140px 60px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .contact-container {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .contact h2 {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 24px;
+    }
+
+    .contact p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-bottom: 48px;
+    }
+
+    .contact-info {
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      margin-top: 60px;
+    }
+
+    .contact-item {
+      text-align: center;
+    }
+
+    .contact-item-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .contact-item-value {
+      font-size: 14px;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 60px;
+      background: var(--bg-secondary);
+      border-top: 1px solid rgba(201, 162, 39, 0.1);
+      position: relative;
+      z-index: 2;
+    }
+
+    .footer-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .footer-brand img {
+      width: 40px;
+      height: 40px;
+      opacity: 0.7;
+    }
+
+    .footer-brand span {
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+    }
+
+    .footer-text {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 32px;
+    }
+
+    .footer-links a {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: color 0.3s;
+    }
+
+    .footer-links a:hover {
+      color: var(--gold);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .hero-title {
+        font-size: 56px;
+      }
+
+      .stats-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 40px;
+      }
+
+      .about-container {
+        grid-template-columns: 1fr;
+        gap: 60px;
+      }
+
+      .mission-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .nav {
+        padding: 20px 24px;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .hero {
+        padding: 0 24px;
+      }
+
+      .hero-title {
+        font-size: 40px;
+      }
+
+      .stats, .about, .mission, .contact {
+        padding: 80px 24px;
+      }
+
+      .stat-number {
+        font-size: 48px;
+      }
+
+      .about h2, .mission-header h2, .contact h2 {
+        font-size: 32px;
+      }
+
+      .footer-container {
+        flex-direction: column;
+        gap: 24px;
+        text-align: center;
+      }
+
+      .contact-info {
+        flex-direction: column;
+        gap: 32px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <!-- Loader -->
-  <div id="loader" class="loader-overlay">
-    <div class="loader-content">
-      <div class="loader-logo">
-        <img src="/logo.png" alt="USSS" class="loader-shield" style="width: 100px; height: 100px;">
-      </div>
-      <div class="loader-text">USSS Management Portal</div>
-      <div class="loader-bar">
-        <div class="loader-progress"></div>
-      </div>
-    </div>
-  </div>
+  <div class="grid-overlay"></div>
 
-  <!-- Login Page -->
-  <div id="loginPage" class="login-page hidden">
-    <div class="login-bg">
-      <div class="login-particles" id="loginParticles"></div>
-    </div>
-    <div class="login-container">
-      <div class="login-card">
-        <div class="login-header">
-          <div class="login-logo">
-            <img src="/logo.png" alt="USSS" class="logo-shield" style="width: 120px; height: 120px;">
-          </div>
-          <h1>United States Secret Service</h1>
-          <p>Management Portal - Authorized Access Only</p>
-        </div>
-        <form id="loginForm" class="login-form">
-          <div class="input-group">
-            <label for="username">Username</label>
-            <div class="input-wrapper">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-              <input type="text" id="username" name="username" required autocomplete="username" placeholder="Enter your username">
-            </div>
-          </div>
-          <div class="input-group">
-            <label for="password">Password</label>
-            <div class="input-wrapper">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-              <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Enter your password">
-              <button type="button" class="toggle-password" onclick="togglePassword()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div id="loginError" class="error-message hidden"></div>
-          <button type="submit" class="login-btn">
-            <span>Sign In</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-          </button>
-        </form>
-        <div class="login-footer">
-          <p>Secure access powered by USSS</p>
-        </div>
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-brand">
+      <img src="/logo.png" alt="USSS">
+      <div class="nav-brand-text">
+        <span class="nav-brand-title">Secret Service</span>
+        <span class="nav-brand-subtitle">Majestic RP</span>
       </div>
     </div>
-  </div>
+    <div class="nav-links">
+      <a href="#about">O nas</a>
+      <a href="#mission">Misja</a>
+      <a href="#contact">Kontakt</a>
+    </div>
+    <a href="/panel" class="nav-btn">Panel Agenta</a>
+  </nav>
 
-  <!-- Main Application -->
-  <div id="app" class="app-container hidden">
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div class="sidebar-logo">
-          <img src="/logo.png" alt="USSS" class="logo-mini" style="width: 40px; height: 40px;">
-          <span class="logo-text">USSS Portal</span>
-        </div>
-        <button class="sidebar-toggle" onclick="toggleSidebar()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="12" x2="21" y2="12"/>
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <line x1="3" y1="18" x2="21" y2="18"/>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        United States Secret Service
+      </div>
+      <h1 class="hero-title">
+        <span>Służymy.</span>
+        <span>Chronimy.</span>
+        <span class="gold">Bronimy.</span>
+      </h1>
+      <p class="hero-subtitle">
+        Elitarna jednostka ochrony najważniejszych osób w państwie
+      </p>
+      <div class="hero-cta">
+        <a href="#about" class="btn-primary">
+          Poznaj nas
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
-        </button>
+        </a>
+        <a href="#contact" class="btn-secondary">Kontakt</a>
       </div>
+    </div>
+    <div class="scroll-indicator">
+      <span>Przewiń</span>
+      <div class="line"></div>
+    </div>
+  </section>
 
-      <nav class="sidebar-nav">
-        <div class="nav-section">
-          <span class="nav-label">Main</span>
-          <a href="#" class="nav-item active" data-page="dashboard">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7"/>
-              <rect x="14" y="3" width="7" height="7"/>
-              <rect x="14" y="14" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/>
-            </svg>
-            <span>Dashboard</span>
-          </a>
-          <a href="#" class="nav-item" data-page="reports">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-              <polyline points="10 9 9 9 8 9"/>
-            </svg>
-            <span>Reports</span>
-            <span class="nav-badge" id="pendingBadge">0</span>
-          </a>
-          <a href="#" class="nav-item" data-page="statistics">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="20" x2="18" y2="10"/>
-              <line x1="12" y1="20" x2="12" y2="4"/>
-              <line x1="6" y1="20" x2="6" y2="14"/>
-            </svg>
-            <span>Statistics</span>
-          </a>
-          <a href="#" class="nav-item" data-page="payouts">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="1" x2="12" y2="23"/>
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-            </svg>
-            <span>Payouts</span>
-          </a>
+  <!-- Stats -->
+  <section class="stats">
+    <div class="stats-container">
+      <div class="stat">
+        <div class="stat-number">24/7</div>
+        <div class="stat-label">Gotowość</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">100%</div>
+        <div class="stat-label">Skuteczność</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">Elite</div>
+        <div class="stat-label">Poziom</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">VIP</div>
+        <div class="stat-label">Ochrona</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section class="about" id="about">
+    <div class="about-container">
+      <div class="about-content">
+        <span class="section-label">O Agencji</span>
+        <h2>Elita służb specjalnych</h2>
+        <p>
+          United States Secret Service to elitarna jednostka odpowiedzialna za ochronę
+          najważniejszych osób w państwie. Nasi agenci przechodzą rygorystyczne szkolenia,
+          aby zapewnić bezpieczeństwo na najwyższym poziomie.
+        </p>
+        <p>
+          Działamy w cieniu, aby ci, których chronimy, mogli działać w świetle.
+          Dyskrecja, profesjonalizm i absolutne poświęcenie - to nasze fundamenty.
+        </p>
+      </div>
+      <div class="about-image">
+        <div class="about-image-wrapper">
+          <img src="/logo.png" alt="USSS Badge">
         </div>
+      </div>
+    </div>
+  </section>
 
-        <div class="nav-section">
-          <span class="nav-label">Administration</span>
-          <a href="#" class="nav-item" data-page="users">
+  <!-- Mission -->
+  <section class="mission" id="mission">
+    <div class="mission-container">
+      <div class="mission-header">
+        <span class="section-label">Nasza Misja</span>
+        <h2>Trzy filary działania</h2>
+        <p>Fundamenty, na których opiera się każda nasza operacja</p>
+      </div>
+      <div class="mission-grid">
+        <div class="mission-card">
+          <div class="mission-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <h3>Ochrona VIP</h3>
+          <p>Zapewniamy bezpieczeństwo najważniejszym osobom w państwie. Każdy szczegół ma znaczenie.</p>
+        </div>
+        <div class="mission-card">
+          <div class="mission-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+          </div>
+          <h3>Szybka reakcja</h3>
+          <p>Gotowość do działania 24 godziny na dobę, 7 dni w tygodniu. Zawsze czujni, zawsze przygotowani.</p>
+        </div>
+        <div class="mission-card">
+          <div class="mission-card-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
               <circle cx="9" cy="7" r="4"/>
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
               <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
-            <span>Users</span>
-          </a>
-          <a href="#" class="nav-item" data-page="audit">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-            <span>Audit Log</span>
-          </a>
-          <a href="#" class="nav-item" data-page="settings">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-            </svg>
-            <span>Settings</span>
-          </a>
-        </div>
-      </nav>
-
-      <div class="sidebar-footer">
-        <div class="user-info" id="userInfo">
-          <div class="user-avatar">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
           </div>
-          <div class="user-details">
-            <span class="user-name" id="userName">Admin</span>
-            <span class="user-role" id="userRole">Director</span>
-          </div>
-          <button class="logout-btn" onclick="logout()" title="Logout">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-          </button>
+          <h3>Elitarny zespół</h3>
+          <p>Rekrutujemy tylko najlepszych. Nasi agenci to profesjonaliści najwyższej klasy.</p>
         </div>
       </div>
-    </aside>
+    </div>
+  </section>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <header class="main-header">
-        <div class="header-left">
-          <button class="mobile-menu-btn" onclick="toggleSidebar()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="3" y1="12" x2="21" y2="12"/>
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <line x1="3" y1="18" x2="21" y2="18"/>
-            </svg>
-          </button>
-          <h1 class="page-title" id="pageTitle">Dashboard</h1>
+  <!-- Contact -->
+  <section class="contact" id="contact">
+    <div class="contact-container">
+      <span class="section-label">Kontakt</span>
+      <h2>Skontaktuj się z nami</h2>
+      <p>
+        W sprawach rekrutacji lub oficjalnych zapytań, skontaktuj się z naszym biurem.
+      </p>
+      <a href="#" class="btn-primary">
+        Aplikuj do USSS
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </a>
+      <div class="contact-info">
+        <div class="contact-item">
+          <div class="contact-item-label">Serwer</div>
+          <div class="contact-item-value">Majestic RP</div>
         </div>
-        <div class="header-right">
-          <div class="search-box">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input type="text" placeholder="Search..." id="globalSearch">
-          </div>
-          <button class="header-btn" onclick="refreshData()" title="Refresh">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 4 23 10 17 10"/>
-              <polyline points="1 20 1 14 7 14"/>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-            </svg>
-          </button>
-          <div class="datetime" id="datetime"></div>
+        <div class="contact-item">
+          <div class="contact-item-label">Frakcja</div>
+          <div class="contact-item-value">Secret Service</div>
         </div>
-      </header>
-
-      <div class="content-wrapper" id="contentWrapper">
-        <!-- Content will be dynamically loaded here -->
+        <div class="contact-item">
+          <div class="contact-item-label">Status</div>
+          <div class="contact-item-value">Aktywna rekrutacja</div>
+        </div>
       </div>
-    </main>
-  </div>
+    </div>
+  </section>
 
-  <!-- Toast Container -->
-  <div id="toastContainer" class="toast-container"></div>
-
-  <!-- Modal Container -->
-  <div id="modalContainer" class="modal-container hidden">
-    <div class="modal-backdrop" onclick="closeModal()"></div>
-    <div class="modal-content" id="modalContent"></div>
-  </div>
-
-  <script src="/app.js"></script>
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <img src="/logo.png" alt="USSS">
+        <span>United States Secret Service</span>
+      </div>
+      <p class="footer-text">&copy; 2024 USSS Majestic RP. Wszystkie prawa zastrzeżone.</p>
+      <div class="footer-links">
+        <a href="/panel">Panel</a>
+        <a href="#about">O nas</a>
+        <a href="#contact">Kontakt</a>
+      </div>
+    </div>
+  </footer>
 </body>
 </html>
