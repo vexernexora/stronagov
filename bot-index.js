@@ -116,24 +116,25 @@ app.listen(3000, () => console.log('🧠 Bot API działa na porcie 3000'));
 
 // -------------------- PARSE DISPLAY NAME --------------------
 // Parse Discord nickname to extract just the name
-// Format: "USSS I Kraker Kosmos I #51781" → "Kraker Kosmos"
+// Formats:
+// - "USSS I Kraker Kosmos I #51781" → "Kraker Kosmos"
+// - "USSS| Gregory Other | 887" → "Gregory Other"
 function parseDisplayName(nickname) {
   if (!nickname) return 'Unknown';
 
-  // Try to extract name between "I" separators
-  // Pattern: PREFIX I NAME I #UID or PREFIX I NAME #UID
-  const parts = nickname.split(/\s*I\s*/i);
+  // Try to split by | or I separator
+  const parts = nickname.split(/\s*[|I]\s*/);
 
   if (parts.length >= 2) {
-    // Get the middle part (name)
-    let name = parts.length >= 3 ? parts[1] : parts[1];
-    // Remove UID suffix like #51781
-    name = name.replace(/\s*#\d+\s*$/, '').trim();
+    // Get the middle part (name) - usually the second element
+    let name = parts[1];
+    // Remove UID suffix like #51781 or just 887
+    name = name.replace(/\s*#?\d+\s*$/, '').trim();
     if (name) return name;
   }
 
-  // Fallback: just remove #UID suffix
-  const withoutUid = nickname.replace(/\s*#\d+\s*$/, '').trim();
+  // Fallback: just remove #UID or UID suffix
+  const withoutUid = nickname.replace(/\s*#?\d+\s*$/, '').trim();
   if (withoutUid) return withoutUid;
 
   return nickname;
