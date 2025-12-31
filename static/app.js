@@ -562,6 +562,44 @@ async function renderReports(wrapper) {
         color: var(--text-muted);
         font-size: 12px;
       }
+      .report-card-image-container {
+        width: 100%;
+        min-height: 100px;
+        background: var(--bg-input);
+      }
+      .report-card-image-error {
+        width: 100%;
+        height: 120px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-input);
+        color: var(--text-muted);
+        gap: 8px;
+        padding: 12px;
+      }
+      .report-card-image-error svg {
+        width: 32px;
+        height: 32px;
+        opacity: 0.5;
+      }
+      .report-card-image-error span {
+        font-size: 12px;
+      }
+      .report-card-image-error a {
+        font-size: 11px;
+        color: var(--primary);
+        text-decoration: none;
+        padding: 4px 10px;
+        border: 1px solid var(--primary);
+        border-radius: 4px;
+        transition: all 0.2s;
+      }
+      .report-card-image-error a:hover {
+        background: var(--primary);
+        color: var(--bg-dark);
+      }
       .report-card-body { padding: 14px; }
       .report-card-top {
         display: flex;
@@ -787,7 +825,9 @@ function renderUserReports(userId) {
       ${userReports.map(report => `
         <div class="report-card ${report.status}">
           ${report.attachment ? `
-            <img src="${report.attachment}" class="report-card-image" onclick="openImageModal('${report.attachment}')" alt="Załącznik" loading="lazy" onerror="this.parentElement.querySelector('.report-card-no-image')?.remove(); this.style.display='none';">
+            <div class="report-card-image-container" id="img-${report.id}">
+              <img src="${report.attachment}" class="report-card-image" onclick="openImageModal('${report.attachment}')" alt="Załącznik" loading="lazy" onerror="handleImageError('${report.id}', '${report.attachment}')">
+            </div>
           ` : `
             <div class="report-card-no-image">Brak zdjęcia</div>
           `}
@@ -845,9 +885,26 @@ async function acceptAllUserReports(userId) {
 function openImageModal(imageUrl) {
   const modal = document.createElement('div');
   modal.className = 'image-modal';
-  modal.innerHTML = `<img src="${imageUrl}" alt="Powiększony załącznik">`;
-  modal.onclick = () => modal.remove();
+  modal.innerHTML = `<img src="${imageUrl}" alt="Powiększony załącznik" onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\\'color: white; text-align: center;\\'>Nie udało się załadować zdjęcia<br><a href=\\'${imageUrl}\\' target=\\'_blank\\' style=\\'color: var(--primary);\\'>Otwórz w nowej karcie</a></div>';">`;
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
   document.body.appendChild(modal);
+}
+
+function handleImageError(reportId, imageUrl) {
+  const container = document.getElementById('img-' + reportId);
+  if (container) {
+    container.innerHTML = `
+      <div class="report-card-image-error">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+        <span>Zdjęcie niedostępne</span>
+        <a href="${imageUrl}" target="_blank" onclick="event.stopPropagation();">Otwórz link</a>
+      </div>
+    `;
+  }
 }
 
 function renderReportsTable(reports) {
