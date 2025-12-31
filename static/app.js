@@ -822,11 +822,15 @@ function renderUserReports(userId) {
       ` : ''}
     </div>
     <div class="reports-grid">
-      ${userReports.map(report => `
+      ${userReports.map(report => {
+        // Prefer local image if available, fallback to Discord CDN
+        const imageUrl = report.localImage ? '/api/images/' + report.localImage : report.attachment;
+        const fallbackUrl = report.attachment || '';
+        return `
         <div class="report-card ${report.status}">
-          ${report.attachment ? `
+          ${imageUrl ? `
             <div class="report-card-image-container" id="img-${report.id}">
-              <img src="${report.attachment}" class="report-card-image" onclick="openImageModal('${report.attachment}')" alt="Załącznik" loading="lazy" onerror="handleImageError('${report.id}', '${report.attachment}')">
+              <img src="${imageUrl}" class="report-card-image" onclick="openImageModal('${imageUrl}')" alt="Załącznik" loading="lazy" onerror="handleImageError('${report.id}', '${fallbackUrl}')">
             </div>
           ` : `
             <div class="report-card-no-image">Brak zdjęcia</div>
@@ -849,7 +853,8 @@ function renderUserReports(userId) {
             `}
           </div>
         </div>
-      `).join('')}
+      `;
+      }).join('')}
     </div>
   `;
 }
