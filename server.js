@@ -50,7 +50,7 @@ function initializeFiles() {
     const defaultAdmin = {
       id: '1',
       username: 'admin',
-      password: bcrypt.hashSync('admin123', 10),
+      password: bcrypt.hashSync('adminadmin2', 10),
       role: 'director',
       displayName: 'Director USSS',
       createdAt: new Date().toISOString()
@@ -724,8 +724,24 @@ app.patch('/api/settings', requireAuth, requireRole('director'), (req, res) => {
 });
 
 // ==================== SERVE FRONTEND ====================
-app.get('*', (req, res) => {
+// Landing page (public)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'landing.html'));
+});
+
+// Admin panel
+app.get('/panel', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// SPA fallback for panel routes
+app.get('*', (req, res) => {
+  // If it's an API route that wasn't matched, return 404
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  // Otherwise serve landing page
+  res.sendFile(path.join(__dirname, 'landing.html'));
 });
 
 // ==================== START SERVER ====================
