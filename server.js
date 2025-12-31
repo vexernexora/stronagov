@@ -34,6 +34,7 @@ const RAPORTY_FILE = path.join(__dirname, 'data', 'raporty.json');
 const USERS_FILE = path.join(__dirname, 'data', 'users.json');
 const SETTINGS_FILE = path.join(__dirname, 'data', 'settings.json');
 const AUDIT_LOG_FILE = path.join(__dirname, 'data', 'audit.json');
+const NOTES_FILE = path.join(__dirname, 'data', 'notes.json');
 
 // Ensure data directory exists
 if (!fs.existsSync(path.join(__dirname, 'data'))) {
@@ -68,6 +69,9 @@ function initializeFiles() {
   }
   if (!fs.existsSync(AUDIT_LOG_FILE)) {
     fs.writeFileSync(AUDIT_LOG_FILE, JSON.stringify([], null, 2));
+  }
+  if (!fs.existsSync(NOTES_FILE)) {
+    fs.writeFileSync(NOTES_FILE, JSON.stringify({}, null, 2));
   }
 }
 initializeFiles();
@@ -697,6 +701,102 @@ app.post('/api/admin/reset-stats', requireAuth, requireRole('director'), (req, r
   }
 });
 
+// List all backups
+app.get('/api/admin/backups', requireAuth, requireRole('director'), (req, res) => {
+  try {
+    const dataDir = path.join(__dirname, 'data');
+    const files = fs.readdirSync(dataDir);
+
+    const backups = files
+      .filter(f => f.startsWith('raporty.backup-') && f.endsWith('.json'))
+      .map(f => {
+        const filePath = path.join(dataDir, f);
+        const stats = fs.statSync(filePath);
+        const data = readJSON(filePath);
+        return {
+          filename: f,
+          date: stats.mtime.toISOString(),
+          size: stats.size,
+          reportCount: Array.isArray(data) ? data.length : 0
+        };
+      })
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    res.json({ backups });
+  } catch (error) {
+    console.error('Error listing backups:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Restore from backup
+app.post('/api/admin/restore', requireAuth, requireRole('director'), (req, res) => {
+  try {
+    const { filename } = req.body;
+
+    if (!filename || !filename.startsWith('raporty.backup-') || !filename.endsWith('.json')) {
+      return res.status(400).json({ error: 'Invalid backup filename' });
+    }
+
+    const backupPath = path.join(__dirname, 'data', filename);
+
+    if (!fs.existsSync(backupPath)) {
+      return res.status(404).json({ error: 'Backup file not found' });
+    }
+
+    // Create backup of current data before restore
+    const currentReports = readJSON(RAPORTY_FILE);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const preRestoreBackup = path.join(__dirname, 'data', `raporty.pre-restore-${timestamp}.json`);
+    fs.writeFileSync(preRestoreBackup, JSON.stringify(currentReports, null, 2));
+
+    // Restore from backup
+    const backupData = readJSON(backupPath);
+    writeJSON(RAPORTY_FILE, backupData);
+
+    logAudit('RESTORE_BACKUP', req.session.user.id, {
+      filename,
+      restoredCount: backupData.length,
+      previousCount: currentReports.length
+    });
+
+    res.json({
+      success: true,
+      restoredCount: backupData.length,
+      preRestoreBackup: `raporty.pre-restore-${timestamp}.json`
+    });
+  } catch (error) {
+    console.error('Error restoring backup:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete backup
+app.delete('/api/admin/backups/:filename', requireAuth, requireRole('director'), (req, res) => {
+  try {
+    const { filename } = req.params;
+
+    if (!filename.startsWith('raporty.backup-') && !filename.startsWith('raporty.pre-restore-')) {
+      return res.status(400).json({ error: 'Invalid backup filename' });
+    }
+
+    const backupPath = path.join(__dirname, 'data', filename);
+
+    if (!fs.existsSync(backupPath)) {
+      return res.status(404).json({ error: 'Backup file not found' });
+    }
+
+    fs.unlinkSync(backupPath);
+
+    logAudit('DELETE_BACKUP', req.session.user.id, { filename });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting backup:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ==================== SETTINGS ====================
 app.get('/api/settings', requireAuth, (req, res) => {
   try {
@@ -719,6 +819,128 @@ app.patch('/api/settings', requireAuth, requireRole('director'), (req, res) => {
 
     res.json({ success: true, settings });
   } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ==================== NOTES API ====================
+// Get all notes for current user
+app.get('/api/notes', requireAuth, (req, res) => {
+  try {
+    const allNotes = readJSON(NOTES_FILE);
+    const userNotes = allNotes[req.session.user.id] || [];
+    res.json({ notes: userNotes });
+  } catch (error) {
+    console.error('Error fetching notes:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create new note
+app.post('/api/notes', requireAuth, (req, res) => {
+  try {
+    const { title, content } = req.body;
+    const allNotes = readJSON(NOTES_FILE);
+    const userNotes = allNotes[req.session.user.id] || [];
+
+    // Max 10 notes per user
+    if (userNotes.length >= 10) {
+      return res.status(400).json({ error: 'Maksymalnie 10 notatek. Usuń jedną, aby dodać nową.' });
+    }
+
+    const newNote = {
+      id: Date.now().toString(),
+      title: title || 'Nowa notatka',
+      content: content || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    userNotes.push(newNote);
+    allNotes[req.session.user.id] = userNotes;
+    writeJSON(NOTES_FILE, allNotes);
+
+    res.json({ success: true, note: newNote });
+  } catch (error) {
+    console.error('Error creating note:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Update note
+app.patch('/api/notes/:id', requireAuth, (req, res) => {
+  try {
+    const { title, content } = req.body;
+    const allNotes = readJSON(NOTES_FILE);
+    const userNotes = allNotes[req.session.user.id] || [];
+
+    const noteIndex = userNotes.findIndex(n => n.id === req.params.id);
+    if (noteIndex === -1) {
+      return res.status(404).json({ error: 'Notatka nie znaleziona' });
+    }
+
+    if (title !== undefined) userNotes[noteIndex].title = title;
+    if (content !== undefined) userNotes[noteIndex].content = content;
+    userNotes[noteIndex].updatedAt = new Date().toISOString();
+
+    allNotes[req.session.user.id] = userNotes;
+    writeJSON(NOTES_FILE, allNotes);
+
+    res.json({ success: true, note: userNotes[noteIndex] });
+  } catch (error) {
+    console.error('Error updating note:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete note
+app.delete('/api/notes/:id', requireAuth, (req, res) => {
+  try {
+    const allNotes = readJSON(NOTES_FILE);
+    const userNotes = allNotes[req.session.user.id] || [];
+
+    const noteIndex = userNotes.findIndex(n => n.id === req.params.id);
+    if (noteIndex === -1) {
+      return res.status(404).json({ error: 'Notatka nie znaleziona' });
+    }
+
+    userNotes.splice(noteIndex, 1);
+    allNotes[req.session.user.id] = userNotes;
+    writeJSON(NOTES_FILE, allNotes);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting note:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Import note from file content
+app.post('/api/notes/import', requireAuth, (req, res) => {
+  try {
+    const { title, content } = req.body;
+    const allNotes = readJSON(NOTES_FILE);
+    const userNotes = allNotes[req.session.user.id] || [];
+
+    if (userNotes.length >= 10) {
+      return res.status(400).json({ error: 'Maksymalnie 10 notatek. Usuń jedną, aby zaimportować.' });
+    }
+
+    const newNote = {
+      id: Date.now().toString(),
+      title: title || 'Zaimportowana notatka',
+      content: content || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    userNotes.push(newNote);
+    allNotes[req.session.user.id] = userNotes;
+    writeJSON(NOTES_FILE, allNotes);
+
+    res.json({ success: true, note: newNote });
+  } catch (error) {
+    console.error('Error importing note:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
