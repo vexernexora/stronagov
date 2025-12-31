@@ -333,144 +333,409 @@ function renderTopUsers(topUsers) {
 }
 
 // ==================== Reports ====================
+let reportsViewMode = 'categories'; // 'categories' or 'table'
+let selectedCategory = null;
+
 async function renderReports(wrapper) {
   wrapper.innerHTML = `
-    <div class="table-container">
-      <div class="table-header">
-        <h3 class="table-title">All Reports</h3>
-        <div class="table-filters">
-          <select class="filter-select" id="statusFilter" onchange="filterReports()">
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="accepted">Accepted</option>
-            <option value="rejected">Rejected</option>
+    <div class="reports-page">
+      <div class="reports-header">
+        <div class="reports-filters">
+          <select class="filter-select" id="statusFilter" onchange="loadReports()">
+            <option value="pending">Oczekujące</option>
+            <option value="all">Wszystkie</option>
+            <option value="accepted">Zaakceptowane</option>
+            <option value="rejected">Odrzucone</option>
           </select>
-          <input type="text" class="filter-input" id="searchFilter" placeholder="Search by name, UID, type..." onkeyup="debounceSearch()">
-          <div class="bulk-actions" id="bulkActions" style="display: none;">
-            <button class="btn btn-success" onclick="bulkAccept()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-              Accept Selected
-            </button>
-            <button class="btn btn-danger" onclick="bulkReject()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-              Reject Selected
-            </button>
-          </div>
+          <input type="text" class="filter-input" id="searchFilter" placeholder="Szukaj po nazwie, UID..." onkeyup="debounceSearch()">
+        </div>
+        <div class="bulk-actions" id="bulkActions" style="display: none;">
+          <button class="btn btn-success btn-sm" onclick="bulkAccept()">Akceptuj zaznaczone</button>
+          <button class="btn btn-danger btn-sm" onclick="bulkReject()">Odrzuć zaznaczone</button>
         </div>
       </div>
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
-            <th>User</th>
-            <th>Type</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="reportsTableBody">
-          <tr><td colspan="7" class="text-center">Loading...</td></tr>
-        </tbody>
-      </table>
-      <div class="table-footer">
-        <div class="pagination-info" id="paginationInfo">Showing 0 of 0 reports</div>
-        <div class="pagination" id="pagination"></div>
+
+      <div class="reports-categories" id="reportsCategories">
+        <div class="loading">Ładowanie kategorii...</div>
+      </div>
+
+      <div class="reports-content" id="reportsContent">
+        <div class="reports-placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <p>Wybierz kategorię, aby zobaczyć raporty</p>
+        </div>
       </div>
     </div>
+
+    <style>
+      .reports-page {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        height: calc(100vh - 160px);
+      }
+      .reports-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .reports-filters {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .reports-categories {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 16px;
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+      }
+      .category-btn {
+        padding: 8px 16px;
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .category-btn:hover {
+        background: var(--bg-hover);
+        border-color: var(--primary);
+      }
+      .category-btn.active {
+        background: var(--primary);
+        color: var(--bg-dark);
+        border-color: var(--primary);
+      }
+      .category-btn .count {
+        background: rgba(0,0,0,0.2);
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .category-btn.active .count {
+        background: rgba(0,0,0,0.3);
+      }
+      .reports-content {
+        flex: 1;
+        overflow-y: auto;
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 16px;
+      }
+      .reports-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-muted);
+      }
+      .reports-placeholder svg {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
+      .reports-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 16px;
+      }
+      .report-card {
+        background: var(--bg-dark);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        transition: all 0.2s;
+      }
+      .report-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+      }
+      .report-card.pending {
+        border-left: 4px solid var(--warning);
+      }
+      .report-card.accepted {
+        border-left: 4px solid var(--success);
+      }
+      .report-card.rejected {
+        border-left: 4px solid var(--error);
+      }
+      .report-card-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        cursor: pointer;
+        background: var(--bg-input);
+      }
+      .report-card-image:hover {
+        opacity: 0.9;
+      }
+      .report-card-no-image {
+        width: 100%;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-input);
+        color: var(--text-muted);
+        font-size: 12px;
+      }
+      .report-card-body {
+        padding: 16px;
+      }
+      .report-card-user {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+      }
+      .report-card-username {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 15px;
+      }
+      .report-card-uid {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-family: 'JetBrains Mono', monospace;
+      }
+      .report-card-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 13px;
+      }
+      .report-card-amount {
+        color: var(--success);
+        font-weight: 600;
+        font-family: 'JetBrains Mono', monospace;
+      }
+      .report-card-date {
+        color: var(--text-muted);
+      }
+      .report-card-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .report-card-actions .btn {
+        flex: 1;
+        padding: 10px;
+        font-size: 13px;
+      }
+      .report-card-status {
+        text-align: center;
+        padding: 10px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 8px;
+      }
+      .report-card-status.accepted {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+      }
+      .report-card-status.rejected {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--error);
+      }
+      .report-card-checkbox {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        width: 20px;
+        height: 20px;
+      }
+      .report-card-wrapper {
+        position: relative;
+      }
+      .image-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        cursor: pointer;
+      }
+      .image-modal img {
+        max-width: 95%;
+        max-height: 95%;
+        object-fit: contain;
+      }
+    </style>
   `;
 
   await loadReports();
 }
 
 async function loadReports(page = 1) {
-  const status = document.getElementById('statusFilter')?.value || 'all';
+  const status = document.getElementById('statusFilter')?.value || 'pending';
   const search = document.getElementById('searchFilter')?.value || '';
 
   try {
-    const params = new URLSearchParams({ page, limit: 20, status, search });
+    const params = new URLSearchParams({ page, limit: 500, status, search });
     const response = await fetch(`/api/reports?${params}`);
     const data = await response.json();
 
     reportsData = data;
-    renderReportsTable(data.reports);
-    renderPagination(data);
+    renderCategories(data.reports, data.premieTypes);
+
+    // Auto-select first category with reports
+    if (!selectedCategory && data.reports.length > 0) {
+      const grouped = groupByCategory(data.reports);
+      const firstCategory = Object.keys(grouped)[0];
+      if (firstCategory) {
+        selectCategory(firstCategory);
+      }
+    } else if (selectedCategory) {
+      renderReportsForCategory(selectedCategory);
+    }
+
     updatePendingBadge();
   } catch (error) {
     console.error('Error loading reports:', error);
-    showToast('Failed to load reports', 'error');
+    showToast('Nie udało się załadować raportów', 'error');
   }
 }
 
-function renderReportsTable(reports) {
-  const tbody = document.getElementById('reportsTableBody');
+function groupByCategory(reports) {
+  const grouped = {};
+  reports.forEach(report => {
+    const cat = report.typ || 'Inne';
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(report);
+  });
+  return grouped;
+}
 
-  if (!reports || reports.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="7">
-          <div class="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-            </svg>
-            <h3 class="empty-state-title">No reports found</h3>
-            <p class="empty-state-text">No reports available yet</p>
-          </div>
-        </td>
-      </tr>
+function renderCategories(reports, premieTypes) {
+  const container = document.getElementById('reportsCategories');
+  const grouped = groupByCategory(reports);
+
+  // Sort categories by count (most reports first)
+  const sortedCategories = Object.entries(grouped)
+    .sort((a, b) => b[1].length - a[1].length);
+
+  if (sortedCategories.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-muted); margin: 0;">Brak raportów do wyświetlenia</p>';
+    return;
+  }
+
+  container.innerHTML = sortedCategories.map(([category, categoryReports]) => `
+    <button class="category-btn ${selectedCategory === category ? 'active' : ''}" onclick="selectCategory('${escapeHtml(category)}')">
+      ${escapeHtml(category)}
+      <span class="count">${categoryReports.length}</span>
+    </button>
+  `).join('');
+}
+
+function selectCategory(category) {
+  selectedCategory = category;
+
+  // Update active button
+  document.querySelectorAll('.category-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.includes(category));
+  });
+
+  renderReportsForCategory(category);
+}
+
+function renderReportsForCategory(category) {
+  const container = document.getElementById('reportsContent');
+  const grouped = groupByCategory(reportsData.reports);
+  const reports = grouped[category] || [];
+
+  if (reports.length === 0) {
+    container.innerHTML = `
+      <div class="reports-placeholder">
+        <p>Brak raportów w tej kategorii</p>
+      </div>
     `;
     return;
   }
 
-  tbody.innerHTML = reports.map(report => `
-    <tr data-id="${report.id}">
-      <td>
-        <input type="checkbox" class="report-checkbox" value="${report.id}"
-          ${report.status !== 'pending' ? 'disabled' : ''}
-          onchange="updateSelection()">
-      </td>
-      <td>
-        <div class="user-cell">
-          <span class="user-cell-name">${escapeHtml(report.username || 'Unknown')}</span>
-          <span class="user-cell-uid">${report.uid ? `UID: ${report.uid}` : ''}</span>
+  // Sort by date (newest first)
+  reports.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  container.innerHTML = `
+    <div class="reports-grid">
+      ${reports.map(report => `
+        <div class="report-card-wrapper">
+          <div class="report-card ${report.status}">
+            ${report.attachment ? `
+              <img src="${report.attachment}" class="report-card-image" onclick="openImageModal('${report.attachment}')" alt="Załącznik" loading="lazy" onerror="this.style.display='none'">
+            ` : `
+              <div class="report-card-no-image">
+                <span>Brak zdjęcia</span>
+              </div>
+            `}
+            <div class="report-card-body">
+              <div class="report-card-user">
+                <div>
+                  <div class="report-card-username">${escapeHtml(report.username || 'Unknown')}</div>
+                  ${report.uid ? `<div class="report-card-uid">UID: ${report.uid}</div>` : ''}
+                </div>
+                <span class="status-badge ${report.status}">${report.status}</span>
+              </div>
+              <div class="report-card-meta">
+                <span class="report-card-amount">$${formatNumber(report.kwota || 0)}</span>
+                <span class="report-card-date">${formatDate(report.date, true)}</span>
+              </div>
+              ${report.status === 'pending' ? `
+                <div class="report-card-actions">
+                  <button class="btn btn-success" onclick="updateReportStatus('${report.id}', 'accepted')">
+                    Akceptuj
+                  </button>
+                  <button class="btn btn-danger" onclick="updateReportStatus('${report.id}', 'rejected')">
+                    Odrzuć
+                  </button>
+                </div>
+              ` : `
+                <div class="report-card-status ${report.status}">
+                  ${report.status === 'accepted' ? '✓ Zaakceptowano' : '✗ Odrzucono'}
+                  ${report.updatedBy ? ` przez ${escapeHtml(report.updatedBy)}` : ''}
+                </div>
+              `}
+            </div>
+          </div>
         </div>
-      </td>
-      <td>${escapeHtml(report.typ || '-')}</td>
-      <td class="amount-cell">$${formatNumber(report.kwota || 0)}</td>
-      <td><span class="status-badge ${report.status}">${report.status}</span></td>
-      <td class="date-cell">${formatDate(report.date)}</td>
-      <td>
-        <div class="actions-cell">
-          ${report.status === 'pending' ? `
-            <button class="action-btn accept" onclick="updateReportStatus('${report.id}', 'accepted')" title="Accept">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-            </button>
-            <button class="action-btn reject" onclick="updateReportStatus('${report.id}', 'rejected')" title="Reject">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-          ` : ''}
-          <button class="action-btn" onclick="viewReport('${report.id}')" title="View Details">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+      `).join('')}
+    </div>
+  `;
+}
+
+function openImageModal(imageUrl) {
+  const modal = document.createElement('div');
+  modal.className = 'image-modal';
+  modal.innerHTML = `<img src="${imageUrl}" alt="Powiększony załącznik">`;
+  modal.onclick = () => modal.remove();
+  document.body.appendChild(modal);
+}
+
+function renderReportsTable(reports) {
+  // Keep for compatibility
+  renderReportsForCategory(selectedCategory);
 }
 
 function renderPagination(data) {
