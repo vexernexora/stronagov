@@ -15,17 +15,7 @@
   <div id="loader" class="loader-overlay">
     <div class="loader-content">
       <div class="loader-logo">
-        <svg viewBox="0 0 100 100" class="loader-shield">
-          <defs>
-            <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#c9a227"/>
-              <stop offset="100%" style="stop-color:#f4d03f"/>
-            </linearGradient>
-          </defs>
-          <path fill="url(#shieldGradient)" d="M50 5 L90 20 L90 45 C90 70 70 90 50 95 C30 90 10 70 10 45 L10 20 Z"/>
-          <path fill="#1a1a2e" d="M50 15 L80 27 L80 45 C80 65 65 80 50 85 C35 80 20 65 20 45 L20 27 Z"/>
-          <text x="50" y="58" text-anchor="middle" fill="url(#shieldGradient)" font-size="24" font-weight="bold" font-family="Inter">US</text>
-        </svg>
+        <img src="/logo.png" alt="USSS" class="loader-shield" style="width: 100px; height: 100px;">
       </div>
       <div class="loader-text">USSS Management Portal</div>
       <div class="loader-bar">
@@ -43,25 +33,7 @@
       <div class="login-card">
         <div class="login-header">
           <div class="login-logo">
-            <svg viewBox="0 0 100 100" class="logo-shield">
-              <defs>
-                <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style="stop-color:#c9a227"/>
-                  <stop offset="100%" style="stop-color:#f4d03f"/>
-                </linearGradient>
-                <filter id="glow">
-                  <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                  <feMerge>
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
-              <path filter="url(#glow)" fill="url(#shieldGrad)" d="M50 5 L90 20 L90 45 C90 70 70 90 50 95 C30 90 10 70 10 45 L10 20 Z"/>
-              <path fill="#0d0d1a" d="M50 15 L80 27 L80 45 C80 65 65 80 50 85 C35 80 20 65 20 45 L20 27 Z"/>
-              <text x="50" y="52" text-anchor="middle" fill="url(#shieldGrad)" font-size="18" font-weight="800" font-family="Inter">USSS</text>
-              <text x="50" y="68" text-anchor="middle" fill="#c9a227" font-size="8" font-weight="500" font-family="Inter" opacity="0.8">MANAGEMENT</text>
-            </svg>
+            <img src="/logo.png" alt="USSS" class="logo-shield" style="width: 120px; height: 120px;">
           </div>
           <h1>United States Secret Service</h1>
           <p>Management Portal - Authorized Access Only</p>
@@ -114,11 +86,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-logo">
-          <svg viewBox="0 0 100 100" class="logo-mini">
-            <path fill="#c9a227" d="M50 5 L90 20 L90 45 C90 70 70 90 50 95 C30 90 10 70 10 45 L10 20 Z"/>
-            <path fill="#1a1a2e" d="M50 15 L80 27 L80 45 C80 65 65 80 50 85 C35 80 20 65 20 45 L20 27 Z"/>
-            <text x="50" y="58" text-anchor="middle" fill="#c9a227" font-size="24" font-weight="bold" font-family="Inter">US</text>
-          </svg>
+          <img src="/logo.png" alt="USSS" class="logo-mini" style="width: 40px; height: 40px;">
           <span class="logo-text">USSS Portal</span>
         </div>
         <button class="sidebar-toggle" onclick="toggleSidebar()">

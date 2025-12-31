@@ -335,13 +335,6 @@ async function renderReports(wrapper) {
       <div class="table-header">
         <h3 class="table-title">All Reports</h3>
         <div class="table-filters">
-          <button class="btn btn-primary" onclick="showAddReportModal()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            Add Report
-          </button>
           <select class="filter-select" id="statusFilter" onchange="filterReports()">
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
@@ -424,7 +417,7 @@ function renderReportsTable(reports) {
               <polyline points="14 2 14 8 20 8"/>
             </svg>
             <h3 class="empty-state-title">No reports found</h3>
-            <p class="empty-state-text">Click "Add Report" to create a new report</p>
+            <p class="empty-state-text">No reports available yet</p>
           </div>
         </td>
       </tr>
@@ -659,79 +652,6 @@ function debounceSearch() {
 
 function filterReports() {
   loadReports();
-}
-
-// Add Report Modal
-function showAddReportModal() {
-  const premieTypes = reportsData.premieTypes || {};
-  const typeOptions = Object.entries(premieTypes)
-    .map(([type, amount]) => `<option value="${escapeHtml(type)}">${escapeHtml(type)} ($${formatNumber(amount)})</option>`)
-    .join('');
-
-  showModal(`
-    <div class="modal-header">
-      <h2 class="modal-title">Add New Report</h2>
-      <button class="modal-close" onclick="closeModal()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
-    </div>
-    <div class="modal-body">
-      <form id="addReportForm" onsubmit="addReport(event)">
-        <div class="form-group">
-          <label class="form-label">Username *</label>
-          <input type="text" class="form-input" name="username" required placeholder="Enter agent username">
-        </div>
-        <div class="form-group">
-          <label class="form-label">UID (optional)</label>
-          <input type="text" class="form-input" name="uid" placeholder="Enter agent UID">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Report Type *</label>
-          <select class="form-select" name="typ" required>
-            <option value="">Select type...</option>
-            ${typeOptions}
-          </select>
-        </div>
-      </form>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="document.getElementById('addReportForm').dispatchEvent(new Event('submit'))">Add Report</button>
-    </div>
-  `);
-}
-
-async function addReport(event) {
-  event.preventDefault();
-  const form = event.target;
-  const formData = new FormData(form);
-
-  try {
-    const response = await fetch('/api/reports', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: formData.get('username'),
-        uid: formData.get('uid'),
-        typ: formData.get('typ')
-      })
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      showToast('Report created successfully', 'success');
-      closeModal();
-      loadReports();
-    } else {
-      showToast(data.error || 'Failed to create report', 'error');
-    }
-  } catch (error) {
-    showToast('Failed to create report', 'error');
-  }
 }
 
 // ==================== Statistics ====================

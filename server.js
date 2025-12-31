@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 // Session configuration
 app.use(session({
@@ -247,52 +247,6 @@ app.get('/api/reports/:id', requireAuth, (req, res) => {
     }
     res.json({ report });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Create new report manually (works without bot)
-app.post('/api/reports', requireAuth, (req, res) => {
-  try {
-    const { username, uid, typ } = req.body;
-
-    if (!username || !typ) {
-      return res.status(400).json({ error: 'Username and type are required' });
-    }
-
-    if (!PREMIE[typ]) {
-      return res.status(400).json({ error: 'Invalid report type' });
-    }
-
-    const reports = readJSON(RAPORTY_FILE);
-
-    const newReport = {
-      id: Date.now().toString(),
-      oddzial: 'USSS',
-      username,
-      userId: uid || Date.now().toString(),
-      uid: uid || '',
-      typ,
-      kwota: PREMIE[typ],
-      status: 'pending',
-      date: new Date().toISOString(),
-      attachment: null,
-      createdBy: req.session.user.username
-    };
-
-    reports.push(newReport);
-    writeJSON(RAPORTY_FILE, reports);
-
-    logAudit('REPORT_CREATE', req.session.user.id, {
-      reportId: newReport.id,
-      username,
-      typ,
-      kwota: newReport.kwota
-    });
-
-    res.json({ success: true, report: newReport });
-  } catch (error) {
-    console.error('Error creating report:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
