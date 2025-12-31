@@ -324,7 +324,7 @@ function renderTopUsers(topUsers) {
     <div class="top-user-item">
       <div class="top-user-rank">${index + 1}</div>
       <div class="top-user-info">
-        <div class="top-user-name">${escapeHtml(user.username || 'Unknown')}</div>
+        <div class="top-user-name">${escapeHtml(parseDisplayName(user.username))}</div>
         <div class="top-user-uid">${user.uid ? `UID: ${user.uid}` : 'No UID'}</div>
       </div>
       <div class="top-user-amount">$${formatNumber(user.total)}</div>
@@ -755,7 +755,7 @@ function renderUsersList() {
   container.innerHTML = sortedUsers.map(user => `
     <div class="user-item ${selectedUserId === user.userId ? 'active' : ''}" onclick="selectUser('${user.userId}')">
       <div class="user-item-info">
-        <div class="user-item-name">${escapeHtml(user.username || 'Unknown')}</div>
+        <div class="user-item-name">${escapeHtml(parseDisplayName(user.username))}</div>
         ${user.uid ? `<div class="user-item-uid">UID: ${user.uid}</div>` : ''}
       </div>
       <div class="user-item-stats">
@@ -812,7 +812,7 @@ function renderUserReports(userId) {
   container.innerHTML = `
     <div class="user-reports-header">
       <div class="user-reports-info">
-        <h2>${escapeHtml(user.username || 'Unknown')}</h2>
+        <h2>${escapeHtml(parseDisplayName(user.username))}</h2>
         <span>${user.uid ? `UID: ${user.uid} • ` : ''}${userReports.length} raportów${pendingCount > 0 ? ` • ${pendingCount} oczekujących` : ''}</span>
       </div>
       ${pendingCount > 0 ? `
@@ -2171,6 +2171,30 @@ function formatDate(dateStr, full = false) {
 
 function formatNumber(num) {
   return new Intl.NumberFormat('en-US').format(num);
+}
+
+// Parse Discord nickname to extract just the name
+// Format: "USSS I Kraker Kosmos I #51781" → "Kraker Kosmos"
+function parseDisplayName(nickname) {
+  if (!nickname) return 'Unknown';
+
+  // Try to extract name between "I" separators
+  // Pattern: PREFIX I NAME I #UID or PREFIX I NAME #UID
+  const parts = nickname.split(/\s*I\s*/i);
+
+  if (parts.length >= 2) {
+    // Get the middle part (name)
+    let name = parts.length >= 3 ? parts[1] : parts[1];
+    // Remove UID suffix like #51781
+    name = name.replace(/\s*#\d+\s*$/, '').trim();
+    if (name) return name;
+  }
+
+  // Fallback: just remove #UID suffix
+  const withoutUid = nickname.replace(/\s*#\d+\s*$/, '').trim();
+  if (withoutUid) return withoutUid;
+
+  return nickname;
 }
 
 function escapeHtml(text) {
