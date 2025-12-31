@@ -668,7 +668,8 @@ client.on('interactionCreate', async (interaction) => {
         const kwota = PREMIE[typ] ?? 0;
         const userId = interaction.user.id;
         const guildMember = await interaction.guild.members.fetch(userId).catch(() => null);
-        const username = guildMember?.user?.username ?? interaction.user.username;
+        // Use displayName (server nickname) instead of username
+        const username = guildMember?.displayName ?? guildMember?.user?.username ?? interaction.user.username;
         const uid = extractUIDFromMember(guildMember);
 
         const threadsFetched = await forumChannel.threads.fetch().catch(() => null);
