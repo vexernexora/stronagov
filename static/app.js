@@ -137,15 +137,16 @@ function navigateTo(page) {
     item.classList.toggle('active', item.dataset.page === page);
   });
 
-  // Update page title
+  // Update page title (Polish)
   const titles = {
-    dashboard: 'Dashboard',
-    reports: 'Reports Management',
-    statistics: 'Statistics & Analytics',
-    payouts: 'Payouts',
-    users: 'User Management',
-    audit: 'Audit Log',
-    settings: 'Settings'
+    dashboard: 'Panel Główny',
+    reports: 'Zarządzanie Raportami',
+    statistics: 'Statystyki i Analityka',
+    payouts: 'Wypłaty',
+    notes: 'Notatki',
+    users: 'Zarządzanie Użytkownikami',
+    audit: 'Dziennik Audytu',
+    settings: 'Ustawienia'
   };
   document.getElementById('pageTitle').textContent = titles[page] || page;
 
@@ -174,6 +175,9 @@ async function loadPageContent(page) {
     case 'payouts':
       await renderPayouts(wrapper);
       break;
+    case 'notes':
+      await renderNotes(wrapper);
+      break;
     case 'users':
       await renderUsers(wrapper);
       break;
@@ -181,10 +185,10 @@ async function loadPageContent(page) {
       await renderAudit(wrapper);
       break;
     case 'settings':
-      renderSettings(wrapper);
+      await renderSettings(wrapper);
       break;
     default:
-      wrapper.innerHTML = '<div class="empty-state"><p>Page not found</p></div>';
+      wrapper.innerHTML = '<div class="empty-state"><p>Strona nie znaleziona</p></div>';
   }
 }
 
@@ -807,10 +811,412 @@ async function renderPayouts(wrapper) {
 async function exportPayouts() {
   try {
     window.open('/api/payouts/export', '_blank');
-    showToast('Export started', 'success');
+    showToast('Eksport rozpoczęty', 'success');
   } catch (error) {
-    showToast('Export failed', 'error');
+    showToast('Eksport nie powiódł się', 'error');
   }
+}
+
+// ==================== Notes ====================
+let notesData = [];
+let activeNoteId = null;
+let autoSaveTimeout = null;
+
+async function renderNotes(wrapper) {
+  wrapper.innerHTML = `
+    <div class="notes-container">
+      <div class="notes-sidebar">
+        <div class="notes-header">
+          <h3>Moje Notatki</h3>
+          <div class="notes-actions">
+            <button class="btn btn-primary btn-sm" onclick="createNote()" title="Nowa notatka">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="importNote()" title="Importuj">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="notes-count" id="notesCount">0/10 notatek</div>
+        <div class="notes-list" id="notesList">
+          <div class="loading">Ładowanie...</div>
+        </div>
+      </div>
+      <div class="notes-editor">
+        <div class="notes-editor-header" id="notesEditorHeader">
+          <input type="text" class="note-title-input" id="noteTitleInput" placeholder="Tytuł notatki..." disabled>
+          <button class="btn btn-danger btn-sm" onclick="deleteActiveNote()" id="deleteNoteBtn" disabled title="Usuń notatkę">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+          </button>
+        </div>
+        <textarea class="note-content-input" id="noteContentInput" placeholder="Wybierz notatkę lub utwórz nową..." disabled></textarea>
+        <div class="notes-editor-footer" id="notesEditorFooter">
+          <span id="noteStatus">Wybierz notatkę</span>
+          <span id="noteLastSaved"></span>
+        </div>
+      </div>
+    </div>
+    <input type="file" id="importFileInput" accept=".txt,.md,.json" style="display: none;" onchange="handleFileImport(event)">
+    <style>
+      .notes-container {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 20px;
+        height: calc(100vh - 180px);
+        min-height: 500px;
+      }
+      .notes-sidebar {
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .notes-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .notes-header h3 {
+        margin: 0;
+        font-size: 16px;
+        color: var(--text-primary);
+      }
+      .notes-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .notes-count {
+        padding: 8px 16px;
+        font-size: 12px;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border);
+      }
+      .notes-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px;
+      }
+      .note-item {
+        padding: 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-bottom: 4px;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+      }
+      .note-item:hover {
+        background: var(--bg-hover);
+      }
+      .note-item.active {
+        background: var(--primary);
+        color: var(--bg-dark);
+        border-color: var(--primary);
+      }
+      .note-item-title {
+        font-weight: 500;
+        font-size: 14px;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .note-item-date {
+        font-size: 11px;
+        opacity: 0.7;
+      }
+      .notes-editor {
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .notes-editor-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .note-title-input {
+        flex: 1;
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        color: var(--text-primary);
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .note-title-input:focus {
+        outline: none;
+        border-color: var(--primary);
+      }
+      .note-content-input {
+        flex: 1;
+        background: var(--bg-dark);
+        border: none;
+        padding: 20px;
+        color: var(--text-primary);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 14px;
+        line-height: 1.6;
+        resize: none;
+      }
+      .note-content-input:focus {
+        outline: none;
+      }
+      .note-content-input::placeholder {
+        color: var(--text-muted);
+      }
+      .notes-editor-footer {
+        padding: 12px 16px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+      .notes-empty {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-muted);
+      }
+      .notes-empty svg {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 12px;
+        opacity: 0.5;
+      }
+      @media (max-width: 768px) {
+        .notes-container {
+          grid-template-columns: 1fr;
+          grid-template-rows: 200px 1fr;
+        }
+      }
+    </style>
+  `;
+
+  await loadNotes();
+
+  // Setup auto-save
+  document.getElementById('noteTitleInput').addEventListener('input', () => autoSaveNote());
+  document.getElementById('noteContentInput').addEventListener('input', () => autoSaveNote());
+}
+
+async function loadNotes() {
+  try {
+    const response = await fetch('/api/notes');
+    const data = await response.json();
+    notesData = data.notes || [];
+    renderNotesList();
+  } catch (error) {
+    console.error('Error loading notes:', error);
+    showToast('Nie udało się załadować notatek', 'error');
+  }
+}
+
+function renderNotesList() {
+  const list = document.getElementById('notesList');
+  const count = document.getElementById('notesCount');
+
+  count.textContent = `${notesData.length}/10 notatek`;
+
+  if (notesData.length === 0) {
+    list.innerHTML = `
+      <div class="notes-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <p>Brak notatek</p>
+        <p style="font-size: 11px;">Kliknij + aby utworzyć</p>
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = notesData
+    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+    .map(note => `
+      <div class="note-item ${note.id === activeNoteId ? 'active' : ''}" onclick="selectNote('${note.id}')">
+        <div class="note-item-title">${escapeHtml(note.title || 'Bez tytułu')}</div>
+        <div class="note-item-date">${formatDate(note.updatedAt, true)}</div>
+      </div>
+    `).join('');
+}
+
+function selectNote(noteId) {
+  activeNoteId = noteId;
+  const note = notesData.find(n => n.id === noteId);
+
+  if (!note) return;
+
+  const titleInput = document.getElementById('noteTitleInput');
+  const contentInput = document.getElementById('noteContentInput');
+  const deleteBtn = document.getElementById('deleteNoteBtn');
+  const status = document.getElementById('noteStatus');
+  const lastSaved = document.getElementById('noteLastSaved');
+
+  titleInput.value = note.title || '';
+  titleInput.disabled = false;
+  contentInput.value = note.content || '';
+  contentInput.disabled = false;
+  deleteBtn.disabled = false;
+  status.textContent = 'Gotowe';
+  lastSaved.textContent = `Ostatni zapis: ${formatDate(note.updatedAt, true)}`;
+
+  renderNotesList();
+}
+
+async function createNote() {
+  if (notesData.length >= 10) {
+    showToast('Maksymalnie 10 notatek. Usuń jedną, aby dodać nową.', 'warning');
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/notes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: 'Nowa notatka', content: '' })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      notesData.push(data.note);
+      selectNote(data.note.id);
+      showToast('Notatka utworzona', 'success');
+    } else {
+      showToast(data.error || 'Nie udało się utworzyć notatki', 'error');
+    }
+  } catch (error) {
+    showToast('Nie udało się utworzyć notatki', 'error');
+  }
+}
+
+function autoSaveNote() {
+  if (!activeNoteId) return;
+
+  const status = document.getElementById('noteStatus');
+  status.textContent = 'Zapisywanie...';
+
+  clearTimeout(autoSaveTimeout);
+  autoSaveTimeout = setTimeout(() => saveActiveNote(), 1000);
+}
+
+async function saveActiveNote() {
+  if (!activeNoteId) return;
+
+  const title = document.getElementById('noteTitleInput').value;
+  const content = document.getElementById('noteContentInput').value;
+  const status = document.getElementById('noteStatus');
+  const lastSaved = document.getElementById('noteLastSaved');
+
+  try {
+    const response = await fetch(`/api/notes/${activeNoteId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, content })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      const noteIndex = notesData.findIndex(n => n.id === activeNoteId);
+      if (noteIndex !== -1) {
+        notesData[noteIndex] = data.note;
+      }
+      status.textContent = 'Zapisano';
+      lastSaved.textContent = `Ostatni zapis: ${formatDate(data.note.updatedAt, true)}`;
+      renderNotesList();
+    }
+  } catch (error) {
+    status.textContent = 'Błąd zapisu';
+  }
+}
+
+async function deleteActiveNote() {
+  if (!activeNoteId) return;
+
+  const note = notesData.find(n => n.id === activeNoteId);
+  if (!confirm(`Czy na pewno chcesz usunąć notatkę "${note?.title || 'Bez tytułu'}"?`)) return;
+
+  try {
+    const response = await fetch(`/api/notes/${activeNoteId}`, { method: 'DELETE' });
+
+    if (response.ok) {
+      notesData = notesData.filter(n => n.id !== activeNoteId);
+      activeNoteId = null;
+
+      document.getElementById('noteTitleInput').value = '';
+      document.getElementById('noteTitleInput').disabled = true;
+      document.getElementById('noteContentInput').value = '';
+      document.getElementById('noteContentInput').disabled = true;
+      document.getElementById('deleteNoteBtn').disabled = true;
+      document.getElementById('noteStatus').textContent = 'Wybierz notatkę';
+      document.getElementById('noteLastSaved').textContent = '';
+
+      renderNotesList();
+      showToast('Notatka usunięta', 'success');
+    }
+  } catch (error) {
+    showToast('Nie udało się usunąć notatki', 'error');
+  }
+}
+
+function importNote() {
+  if (notesData.length >= 10) {
+    showToast('Maksymalnie 10 notatek. Usuń jedną, aby zaimportować.', 'warning');
+    return;
+  }
+  document.getElementById('importFileInput').click();
+}
+
+async function handleFileImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  try {
+    const content = await file.text();
+    const title = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
+
+    const response = await fetch('/api/notes/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, content })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      notesData.push(data.note);
+      selectNote(data.note.id);
+      showToast('Notatka zaimportowana', 'success');
+    } else {
+      showToast(data.error || 'Nie udało się zaimportować', 'error');
+    }
+  } catch (error) {
+    showToast('Nie udało się zaimportować pliku', 'error');
+  }
+
+  event.target.value = '';
 }
 
 // ==================== Users ====================

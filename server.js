@@ -34,6 +34,7 @@ const RAPORTY_FILE = path.join(__dirname, 'data', 'raporty.json');
 const USERS_FILE = path.join(__dirname, 'data', 'users.json');
 const SETTINGS_FILE = path.join(__dirname, 'data', 'settings.json');
 const AUDIT_LOG_FILE = path.join(__dirname, 'data', 'audit.json');
+const NOTES_FILE = path.join(__dirname, 'data', 'notes.json');
 
 // Ensure data directory exists
 if (!fs.existsSync(path.join(__dirname, 'data'))) {
@@ -68,6 +69,9 @@ function initializeFiles() {
   }
   if (!fs.existsSync(AUDIT_LOG_FILE)) {
     fs.writeFileSync(AUDIT_LOG_FILE, JSON.stringify([], null, 2));
+  }
+  if (!fs.existsSync(NOTES_FILE)) {
+    fs.writeFileSync(NOTES_FILE, JSON.stringify({}, null, 2));
   }
 }
 initializeFiles();
@@ -815,6 +819,128 @@ app.patch('/api/settings', requireAuth, requireRole('director'), (req, res) => {
 
     res.json({ success: true, settings });
   } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ==================== NOTES API ====================
+// Get all notes for current user
+app.get('/api/notes', requireAuth, (req, res) => {
+  try {
+    const allNotes = readJSON(NOTES_FILE);
+    const userNotes = allNotes[req.session.user.id] || [];
+    res.json({ notes: userNotes });
+  } catch (error) {
+    console.error('Error fetching notes:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create new note
+app.post('/api/notes', requireAuth, (req, res) => {
+  try {
+    const { title, content } = req.body;
+    const allNotes = readJSON(NOTES_FILE);
+    const userNotes = allNotes[req.session.user.id] || [];
+
+    // Max 10 notes per user
+    if (userNotes.length >= 10) {
+      return res.status(400).json({ error: 'Maksymalnie 10 notatek. Usuń jedną, aby dodać nową.' });
+    }
+
+    const newNote = {
+      id: Date.now().toString(),
+      title: title || 'Nowa notatka',
+      content: content || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    userNotes.push(newNote);
+    allNotes[req.session.user.id] = userNotes;
+    writeJSON(NOTES_FILE, allNotes);
+
+    res.json({ success: true, note: newNote });
+  } catch (error) {
+    console.error('Error creating note:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Update note
+app.patch('/api/notes/:id', requireAuth, (req, res) => {
+  try {
+    const { title, content } = req.body;
+    const allNotes = readJSON(NOTES_FILE);
+    const userNotes = allNotes[req.session.user.id] || [];
+
+    const noteIndex = userNotes.findIndex(n => n.id === req.params.id);
+    if (noteIndex === -1) {
+      return res.status(404).json({ error: 'Notatka nie znaleziona' });
+    }
+
+    if (title !== undefined) userNotes[noteIndex].title = title;
+    if (content !== undefined) userNotes[noteIndex].content = content;
+    userNotes[noteIndex].updatedAt = new Date().toISOString();
+
+    allNotes[req.session.user.id] = userNotes;
+    writeJSON(NOTES_FILE, allNotes);
+
+    res.json({ success: true, note: userNotes[noteIndex] });
+  } catch (error) {
+    console.error('Error updating note:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete note
+app.delete('/api/notes/:id', requireAuth, (req, res) => {
+  try {
+    const allNotes = readJSON(NOTES_FILE);
+    const userNotes = allNotes[req.session.user.id] || [];
+
+    const noteIndex = userNotes.findIndex(n => n.id === req.params.id);
+    if (noteIndex === -1) {
+      return res.status(404).json({ error: 'Notatka nie znaleziona' });
+    }
+
+    userNotes.splice(noteIndex, 1);
+    allNotes[req.session.user.id] = userNotes;
+    writeJSON(NOTES_FILE, allNotes);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting note:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Import note from file content
+app.post('/api/notes/import', requireAuth, (req, res) => {
+  try {
+    const { title, content } = req.body;
+    const allNotes = readJSON(NOTES_FILE);
+    const userNotes = allNotes[req.session.user.id] || [];
+
+    if (userNotes.length >= 10) {
+      return res.status(400).json({ error: 'Maksymalnie 10 notatek. Usuń jedną, aby zaimportować.' });
+    }
+
+    const newNote = {
+      id: Date.now().toString(),
+      title: title || 'Zaimportowana notatka',
+      content: content || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    userNotes.push(newNote);
+    allNotes[req.session.user.id] = userNotes;
+    writeJSON(NOTES_FILE, allNotes);
+
+    res.json({ success: true, note: newNote });
+  } catch (error) {
+    console.error('Error importing note:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
