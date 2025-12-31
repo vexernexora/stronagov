@@ -30,7 +30,9 @@ app.use(session({
 }));
 
 // ==================== DATA STORAGE ====================
-const RAPORTY_FILE = path.join(__dirname, 'data', 'raporty.json');
+// Raporty z bota Discord (ścieżka do bota lub zmienna środowiskowa)
+const BOT_PATH = process.env.BOT_PATH || '/home/nexora/projects/majkol';
+const RAPORTY_FILE = path.join(BOT_PATH, 'raporty.json');
 const USERS_FILE = path.join(__dirname, 'data', 'users.json');
 const SETTINGS_FILE = path.join(__dirname, 'data', 'settings.json');
 const AUDIT_LOG_FILE = path.join(__dirname, 'data', 'audit.json');
@@ -43,9 +45,8 @@ if (!fs.existsSync(path.join(__dirname, 'data'))) {
 
 // Initialize files if they don't exist
 function initializeFiles() {
-  if (!fs.existsSync(RAPORTY_FILE)) {
-    fs.writeFileSync(RAPORTY_FILE, JSON.stringify([], null, 2));
-  }
+  // Raporty są zarządzane przez bota - nie tworzymy, tylko czytamy
+  // Bot tworzy raporty.json w swoim katalogu
   if (!fs.existsSync(USERS_FILE)) {
     // Default admin user
     const defaultAdmin = {
@@ -662,9 +663,9 @@ app.post('/api/admin/clear-reports', requireAuth, requireRole('director'), (req,
     const reports = readJSON(RAPORTY_FILE);
     const count = reports.length;
 
-    // Create backup
+    // Create backup (w katalogu bota)
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupFile = path.join(__dirname, 'data', `raporty.backup-${timestamp}.json`);
+    const backupFile = path.join(BOT_PATH, `raporty.backup-${timestamp}.json`);
     fs.writeFileSync(backupFile, JSON.stringify(reports, null, 2));
 
     // Clear reports
@@ -701,16 +702,15 @@ app.post('/api/admin/reset-stats', requireAuth, requireRole('director'), (req, r
   }
 });
 
-// List all backups
+// List all backups (z katalogu bota)
 app.get('/api/admin/backups', requireAuth, requireRole('director'), (req, res) => {
   try {
-    const dataDir = path.join(__dirname, 'data');
-    const files = fs.readdirSync(dataDir);
+    const files = fs.readdirSync(BOT_PATH);
 
     const backups = files
       .filter(f => f.startsWith('raporty.backup-') && f.endsWith('.json'))
       .map(f => {
-        const filePath = path.join(dataDir, f);
+        const filePath = path.join(BOT_PATH, f);
         const stats = fs.statSync(filePath);
         const data = readJSON(filePath);
         return {
@@ -729,7 +729,7 @@ app.get('/api/admin/backups', requireAuth, requireRole('director'), (req, res) =
   }
 });
 
-// Restore from backup
+// Restore from backup (z katalogu bota)
 app.post('/api/admin/restore', requireAuth, requireRole('director'), (req, res) => {
   try {
     const { filename } = req.body;
@@ -738,7 +738,7 @@ app.post('/api/admin/restore', requireAuth, requireRole('director'), (req, res) 
       return res.status(400).json({ error: 'Invalid backup filename' });
     }
 
-    const backupPath = path.join(__dirname, 'data', filename);
+    const backupPath = path.join(BOT_PATH, filename);
 
     if (!fs.existsSync(backupPath)) {
       return res.status(404).json({ error: 'Backup file not found' });
@@ -747,7 +747,7 @@ app.post('/api/admin/restore', requireAuth, requireRole('director'), (req, res) 
     // Create backup of current data before restore
     const currentReports = readJSON(RAPORTY_FILE);
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const preRestoreBackup = path.join(__dirname, 'data', `raporty.pre-restore-${timestamp}.json`);
+    const preRestoreBackup = path.join(BOT_PATH, `raporty.pre-restore-${timestamp}.json`);
     fs.writeFileSync(preRestoreBackup, JSON.stringify(currentReports, null, 2));
 
     // Restore from backup
@@ -771,7 +771,7 @@ app.post('/api/admin/restore', requireAuth, requireRole('director'), (req, res) 
   }
 });
 
-// Delete backup
+// Delete backup (z katalogu bota)
 app.delete('/api/admin/backups/:filename', requireAuth, requireRole('director'), (req, res) => {
   try {
     const { filename } = req.params;
@@ -780,7 +780,7 @@ app.delete('/api/admin/backups/:filename', requireAuth, requireRole('director'),
       return res.status(400).json({ error: 'Invalid backup filename' });
     }
 
-    const backupPath = path.join(__dirname, 'data', filename);
+    const backupPath = path.join(BOT_PATH, filename);
 
     if (!fs.existsSync(backupPath)) {
       return res.status(404).json({ error: 'Backup file not found' });
