@@ -945,6 +945,37 @@ app.post('/api/notes/import', requireAuth, (req, res) => {
   }
 });
 
+// ==================== IMAGES API (from bot folder) ====================
+// Serve local images cached by the bot
+app.get('/api/images/:filename', requireAuth, (req, res) => {
+  try {
+    const { filename } = req.params;
+
+    // Security: only allow specific image extensions
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    const ext = path.extname(filename).toLowerCase();
+
+    if (!allowedExtensions.includes(ext)) {
+      return res.status(400).json({ error: 'Invalid file type' });
+    }
+
+    // Security: prevent directory traversal
+    const safeName = path.basename(filename);
+    const imagePath = path.join(BOT_PATH, 'images', safeName);
+
+    if (!fs.existsSync(imagePath)) {
+      return res.status(404).json({ error: 'Image not found' });
+    }
+
+    // Set cache headers (1 day)
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.sendFile(imagePath);
+  } catch (error) {
+    console.error('Error serving image:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ==================== SERVE FRONTEND ====================
 // Public page (for everyone)
 app.get('/', (req, res) => {
